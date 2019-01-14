@@ -96,13 +96,19 @@ This section is for various specific details about consoles and one-off games th
 
 The V.Smile supports two controllers which communicate bidirectionally with the main console through a wired connection to the serial UART. They likely have an on-board microcontroller to manage communications, which is as yet unidentified and undumped. The controllers are accessed through GPIO port C. The console can reset the controllers and indicate that it is ready to receive data, as well as transmit data to the controllers. The controllers have one joystick, 8 buttons, and 4 LEDs, the latter of which can be set via commands sent from the console. The joystick can indicate 5 positions per direction, for a total of 11 positions per-axis.
 
-The controllers are the current major stumbling block in emulating the V.Smile. Along with other data, the console periodically transmits one of 16 possible values as a check byte to the controller, which transmits back a transform of the most recent two check bytes. In the current version of MAME as of this writing (14 Jan. 2019), the console ceases to respond to joystick and button updates from the controllers after about 5-10 seconds, and it is theorized (but not yet proven) that this is due to the check bytes being transmitted to the console being incorrect.
+Along with other data, the console periodically transmits one of 16 possible values as a check byte to the controller, which transmits back a transform of the most recent two check bytes. The transform is as follows, as documented by Rebecca G. Bettencourt:
 
-Notably, the console has a built-in test mode which can be invoked by having both the On and Off switches set simultaneously on power-up. The test mode will perform a checksum of two different memory ranges, show the current power level as read by the ADC, and show an outline of the controller as well as the state of the buttons and joystick. This, too, fails to respond to controller updates after 5-10 seconds. The intent of this repository is to provide a public view of any progress made towards figuring out why.
+Response = ((A + B + 0xF) & 0xF) ^ 0xB5
+
+In the event that two bytes have not yet been transmitted, a value of 0 is used for A.
+
+Notably, the console has a built-in test mode which can be invoked by having both the On and Off switches set simultaneously on power-up. The test mode will perform a checksum of two different memory ranges, show the current power level as read by the ADC, and show an outline of the controller as well as the state of the buttons and joystick.
+
+Currently, the major stumbling block to the system being marked working in MAME is that a number of games fail to boot entirely, showing nothing but a black screen.
 
 ### LeapFrog Clickstart
 
-Likewise, controller emulation is the current issue hindering emulation of the console in MAME.
+Controller emulation is the current issue hindering emulation of the console in MAME.
 
 The Clickstart has a keyboard and mouse which communicate with the console over an infrared (IR) link. The mouse is connected physically to the keyboard, which manages communication with the console on behalf of both peripherals. It is currently known that the data sent by the keyboard unit is received by the SoC's serial UART through a 6-byte packet which includes 5 bytes of data and one checksum byte. However, it is yet unknown how the console communicates back to the keyboard unit, if indeed it does so at all.
 
