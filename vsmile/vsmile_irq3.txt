@@ -1,0 +1,190 @@
+// IRQ Status/Enable/Acknowledge bits
+#define SPI_IRQ_MASK	0x4000
+#define ADC_IRQ_MASK	0x2000
+#define UART_IRQ_MASK	0x0100
+
+// UART Control bits
+#define UART_RX_INT_EN	0x0001
+#define UART_TX_INT_EN	0x0002
+#define UART_9THBIT	0x000c
+#define UART_9THBIT_0		0x0000
+#define UART_9THBIT_1		0x0004
+#define UART_9THBIT_ODD		0x0008
+#define UART_9THBIT_EVEN	0x000c
+#define UART_MULPRO	0x0010
+#define UART_MODE	0x0020
+#define UART_MODE_10BIT		0x0000
+#define UART_MODE_11BIT		0x0020
+#define UART_RX_EN	0x0040
+#define UART_TX_EN	0x0080
+
+// UART Status bits
+#define UART_RXRDY	0x0001
+#define UART_TXRDY	0x0002
+#define UART_PARITY_ERR	0x0004
+#define UART_FRAME_ERR	0x0008
+#define UART_OVER_ERR	0x0010
+#define UART_BIT9	0x0020
+#define UART_TX_BUSY	0x0040
+#define UART_RX_FULL	0x0080
+
+// IOC bits
+#define IOC_CTRL1_SEL	0x0100
+#define IOC_CTRL2_SEL	0x0200
+
+#define IOC_BUFFER	[3d0c]
+#define IRQ_ENABLE	[3d21]
+#define IRQ_STATUS	[3d22]
+#define IRQ_ACKNOWLEDGE	[3d22]
+#define UART_CTRL	[3d30]
+#define UART_STATUS	[3d31]
+#define UART_RXBUF	[3d36]
+
+u16 m_adc_handler_sr;	// 0x2149
+u16 m_adc_handler_pc;	// 0x214a
+u16 m_uart_handler_sr;	// 0x2153
+u16 m_uart_handler_pc;	// 0x2154
+u16 m_spi_handler_sr;	// 0x2167
+u16 m_spi_handler_pc;	// 0x2168
+u16 m_ctrl_check_byte;	// 0x2170
+u16 m_unk_217b;		// 0x217b
+u16 m_unk_217d;		// 0x217d
+u16 m_unk_217e;		// 0x217e
+u16 m_unk_222b;		// 0x222b
+u16 m_unk_22d5;		// 0x22d5
+u16 m_unk_22d6;		// 0x22d6
+u16 m_unk_22d7;		// 0x22d7
+u16 m_unk_22df;		// 0x22df
+u16 m_other_state;	// 0x22f6
+u16 m_color_state;	// 0x22f7
+u16 m_joy_y_state;	// 0x22f8
+u16 m_joy_x_state;	// 0x22f9
+u16 m_unk_22fa;		// 0x22fa
+u16 m_unk_22fb;		// 0x22fb
+u16 m_unk_22fc;		// 0x22fc
+
+void handle_irq3()
+{
+	if (IRQ_ENABLE & IRQ_STATUS & SPI_IRQ_MASK)
+	{
+		if (m_spi_handler_pc | m_spi_handler_sr)
+		{
+			// call through m_spi_handler_pc/sr
+		}
+		IRQ_ACKNOWLEDGE = SPI_IRQ_MASK;
+		return;
+	}
+	if (IRQ_ENABLE & IRQ_STATUS & UART_IRQ_MASK)
+	{
+		IRQ_ACKNOWLEDGE = UART_IRQ_MASK;
+		if (m_uart_handler_pc | m_uart_handler_sr)
+		{
+			// call through m_uart_handler_pc/sr
+			uart_handler();
+		}
+		return;
+	}
+	if (IRQ_ENABLE & IRQ_STATUS & ADC_IRQ_MASK)
+	{
+		if (m_adc_handler_pc | m_adc_handler_sr)
+		{
+			// call through m_adc_handler_pc/sr
+		}
+		IRQ_ACKNOWLEDGE = ADC_IRQ_MASK;
+		return;
+	}
+}
+
+void uart_handler() // aa10
+{
+	u16 status = UART_STATUS;
+	if (status & UART_RXRDY)
+	{	// aa2f
+		if (!(m_unk_217d & 0x0002))
+		{	// ab19
+			if (status & UART_RX_FULL)
+			{
+				u16 rx_val = UART_RXBUF;
+				u16 high_nybble = rx_Val & 0x00f0;
+				if (high_nybble == 0x40)
+				{	// ab93
+					m_unk_217e |= 0x0600;
+					if (r1 != 0x42)
+					{	// ab9c
+						m_unk_22d5 = rx_val & 0x0001;
+						m_unk_22df = 3;
+						// ab58
+					}
+					else
+					{	// aba5
+						m_unk_22d6 = 0;
+						m_unk_22d7 = 0;
+						m_unk_22df = 0;
+						if (unknown_ac0b() == 1)
+						{	// abba
+							m_unk_22fa = m_unk_22d5;
+							m_unk_22fb = m_unk_22d6;
+							m_unk_22fc = m_unk_22d7;
+							// ab58
+						}
+						else
+						{	// abb0
+							m_unk_22fa = 0xffff;
+							m_unk_22fb = 0xffff;
+							m_unk_22fc = 0xffff;
+							// ab58
+						}
+					}
+				}
+				else if (high_nybble < 0x40)
+				{	// abc8
+				}
+				else if (high_nybble == 0x80)
+				{	// ab4b
+					m_joy_y_state = rx_val & 0x0f;
+					// ab58
+				}
+				else if (high_nybble == 0xc0)
+				{	// ab4e
+					m_joy_x_state = rx_val & 0x0f;
+					// ab58
+				}
+				else if (high_nybble == 0x90)
+				{	// ab51
+					m_color_state = rx_val & 0x0f;
+					// ab58
+				}
+				else if (high_nybble == 0xa0)
+				{	// ab54
+					m_other_state = rx_val & 0x0f;
+					// ab58
+				}
+				else if (high_nybble == 0x70 || high_nybble == 0xb0)
+				{	// ab47
+					m_ctrl_check_byte = rx_val;
+					// ab80
+				}
+				else if (high_nybble == 0x50)
+				{
+					m_unk_217e |= 0x80;
+					// ab80
+				}
+			}
+		}
+	}
+	else if (status & UART_TXRDY)
+	{	// aa1a
+		if (!(m_unk_217d & 0x1000))
+		{
+			IOC_BUFFER &= ~(IOC_CTRL1_SEL | IOC_CTRL2_SEL);
+			m_unk_217d &= ~0x0018;
+		}
+		else
+		{
+			m_unk_217d &= ~0x1018;
+		}
+	}
+	// ab8b
+	m_unk_217d = m_unk_222b;
+	UART_STATUS = UART_RXRDY | UART_TXRDY;
+}

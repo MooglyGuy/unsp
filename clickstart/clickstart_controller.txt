@@ -1,0 +1,292 @@
+void unk_fec7e(); // fec7e
+u16 get_kbd_byte(u16 *unk_buffer); // 1bac5e
+void update_cur_key(); // 278871
+u16 get_cur_key(); // 278885
+u16 multiply_random(u16 multiplicand); // 285953
+u16 unknown_29819d(u16 param0); // 29819d
+u16 get_processed_kbd_byte(); // 3f04b8
+
+u16 m_mouse_data[16];	// 0x0007
+u16 m_data_count;	// 0x0017
+u16 m_processed_count;	// 0x0018
+u16 m_mouse_buf[5];	// 0x0019
+u16 m_in_count; 	// 0x001e
+u16 m_sum;		// 0x001f
+u16 m_uart_rx_mask	// 0x0020
+u16 m_unk_0021;		// 0x0021, mouse processed count?
+u16 m_extra_count;	// 0x0022, mouse ignored count?
+u16 m_unk_0023;		// 0x0023, button state?
+u16 m_mouse_x;		// 0x0024
+u16 m_mouse_y;		// 0x0025
+s16 m_mouse_dx;		// 0x0026
+s16 m_mouse_dy;		// 0x0027
+u16 m_unk_0029;		// 0x0029
+u16 m_unk_12ca;		// 0x12ca
+u16 m_unk_12cb;		// 0x12cb
+u16 m_shift_pressed;	// 0x12d3
+u16 m_unk_12d4;		// 0x12d4
+u16 m_cur_key;		// 0x1337
+u16 m_unk_1353;		// 0x1353
+static const u16 unknown_lut_c5a8[5] = // 0xc5a8
+{
+	0x83a5, 0x83a9, 0x8399, 0x839d, 0x83a1
+};
+static const u16 unknown_lut_c5ad[5] = // 0xc5ad
+{
+	0x84f5, 0x8349, 0x8319, 0x8345, 0x8331
+};
+static cons tu16 unknown_lut_c5b2[5] = // 0xc5b2
+{
+	0x83e1, 0x83e9, 0x835d, 0x84a1, 0x83fd
+};
+static const u16 unknown_lut_c5b7[5] = // 0xc5b7
+{
+	0x002f, 0x0033, 0x001a, 0x0035, 0x001c
+};
+
+u16 get_processed_kbd_byte() // 3f04b7
+{
+	if (m_data_count == m_processed_count)
+		return;
+	u16 value = m_mouse_data[m_processed_count] & 0xff;
+	u16 ret = 0xffff;
+	if (value != 0x3f)
+		ret = value;
+	m_processed_count++;
+	if (m_processed_count == 16) m_processed_count = 0;
+	if (m_unk_0029 >= 17)
+		m_unk_0029 = 16;
+	m_unk_0029--;
+	return ret;
+}
+
+u16 get_kbd_byte(u16 *unk_buffer) // 1bac5e
+{
+	u16 to_process = get_processed_kbd_byte();
+	if (m_unk_12d4 == 0)
+		return 0;
+	if (to_process == 0xffff)
+		return 0;
+	if (to_process & 0x0040)
+		return 0;
+	if (to_process == 0xa9)
+	{
+		if (m_shift_pressed == 1)
+		{
+			m_shift_pressed == 0;
+			return 0;
+		}
+		else
+		{
+			m_shift_pressed = 1;
+			return 0xca;
+		}
+	}
+	// 1bac9c
+	if (!(to_process & 0x80))
+		return 0;
+	to_process &= 0x3f;
+	if (to_process == 0)
+		return 0;
+	if (to_process > 0 && to_process < 0x1a)
+	{
+		// alphabet keys
+		if (m_shift_pressed)
+			return to_process + 0x40;
+		else
+			return to_process + 0x60;
+	}
+	// 1baccf
+	if (to_process > 0x1a && to_process <= 0x24)
+	{
+		// number keys
+		return to_process + 0x15;
+	}
+	// 1bacdf
+	if (to_process <= 0x30)
+	{
+		switch (to_process)
+		{
+			case 0x25: // 1bacec
+				m_unk_12ca++;
+				return 0x3f;
+			case 0x26: // 1bacf4
+				m_unk_12ca--;
+				return 0x2e;
+			case 0x27: // 1bacfc
+				return 0x20;
+			case 0x28: // 1bacff
+				return 0xc8;
+			case 0x29: // 1bad8d
+				return to_process;
+			case 0x2a: // 1bad03
+				return 0xcb;
+			case 0x2b: // 1bad07
+				return 0xc9;
+			case 0x2c: // 1bad0b
+				if (unk_buffer[0] != 0 && m_unk_12cb != 0)
+					unknown_29819d(unknown_lut_c5a8[multiply_random(5)]);
+				return 0xe6;
+			case 0x2d: // 1bad2a
+				unknown_297cd0();
+				return 0xe7;
+			case 0x2e: // 1bad30
+				if (unk_buffer[0] != 0 && m_unk_12cb != 0)
+					unknown_29142e(unknown_lut_c5b7[multiply_random(5)]);
+				return 0xe8;
+			case 0x2f: // 1bad4f
+				if (unk_buffer[0] != 0 && m_unk_12cb != 0)
+					unknown_29819d(unknown_lut_c5b2[multiply_random(5)]);
+				return 0xe9;
+			case 0x30: // 1bad6e
+				if (unk_buffer[0] != 0 && m_unk_12cb != 0)
+					unknown_29819d(unknown_lut_c5ad[multiply_random(5)]);
+				return 0xea;
+		}
+	}
+	return 0;
+}
+
+void update_cur_key() // 278871
+{
+	u16 unk_buffer[1];
+	if (m_cur_key != 0)
+		return m_cur_key;
+	else
+		m_cur_key = get_kbd_byte(unk_buffer);
+}
+
+u16 get_cur_key() // 278885
+{
+	update_cur_key();
+	return m_cur_key;
+}
+
+u16 multiply_random(u16 multiplicand) // 285953
+{
+	return (multiplicand * (sys.rand1 ^ (sys.rand0 << 1))) >> 16;
+}
+
+u16 unknown_29819d(u16 param0)
+{
+	if (param0 < 0x7609)
+		return;
+	u16 ret = 0;
+	if (param0 < 0x8091)
+	{
+		ret = 3;
+	}
+	else if (param0 < 0x8531)
+	{
+		ret = 2;
+	}
+	else
+	{
+		// 2981c5
+		...
+	}
+	// 2981cf
+	m_unk_1353 = 1;
+	29fb2e();
+}
+
+void uart_interrupt()
+{
+	u16 value = uart.rx ^ [0x0020];
+	if (value == 0)
+	{
+		m_in_count = 0;
+		m_sum = 0;
+		return;
+	}
+	else if (m_in_count == 5)
+	{	// 3f0588
+		if (value != (m_sum & 0xff))
+		{
+			m_in_count = 6;
+			m_extra_count++;
+		}
+		else
+		{
+			m_unk_0023 = m_mouse_buf[0];
+			
+			u16 mouse_x = m_mouse_buf[1];
+			u16 old_mouse_x = m_mouse_x;
+			m_mouse_x = mouse_x;
+			
+			mouse_x &= 0x3f;
+			old_mouse_x &= 0x3f;
+			if (mouse_x != old_mouse_x)
+			{
+				if (old_mouse_x != 0)
+				{	// 3f05a3
+					m_mouse_data[m_data_count] = old_mouse_x;
+					m_data_count++;
+					if (m_data_count == 16) m_data_count = 0;
+				}
+				if (old_mouse_x == 0 || mouse_x != 0)
+				{	// 3f05b9
+					mouse_x |= 0x80;
+					m_mouse_data[m_data_count] = mouse_x;
+					m_data_count++;
+					if (m_data_count == 16) m_data_count = 0;
+					[0x0029]++;
+				}
+			}
+
+			// 3f05cc
+			u16 mouse_y = m_mouse_buf[2];
+			u16 old_mouse_y = m_mouse_y;
+			m_mouse_y = mouse_y;
+			
+			mouse_y &= 0x3f;
+			old_mouse_y &= 0x3f;
+			if (mouse_y != old_mouse_y)
+			{
+				if (old_mouse_y != 0)
+				{	// 3f05d8
+					m_mouse_data[m_data_count] = old_mouse_y;
+					m_data_count++;
+					if (m_data_count == 16) m_data_count = 0;
+				}
+				if (old_mouse_y == 0 || mouse_y != 0)
+				{	// 3f05ed
+					mouse_y |= 0x80;
+					m_mouse_data[m_data_count] = mouse_y;
+					m_data_count++;
+					if (m_data_count == 16) m_data_count = 0;
+					[0x0029]++;
+				}
+			}
+
+			// 3f0600
+			if ((m_mouse_x & m_mouse_y & 0x3f) != 0x3f)
+			{	// 3f0609
+				if (m_mouse_x & 0x80)
+					m_mouse_dx -= ((m_mouse_buf[3] | 0x100) ^ 0x1ff) + 1;
+				else
+					m_mouse_dx += m_mouse_buf[3] - 1;
+
+				// 3f061e
+				if (m_mouse_y & 0x80)
+					m_mouse_dy -= ((m_mouse_buf[4] | 0x100) ^ 0x1ff) + 1;
+				else
+					m_mouse_dy += m_mouse_buf[4] - 1;
+			}
+
+			// 3f0633
+			m_unk_0021++;
+		}
+	}
+	else if (m_in_count > 5)
+	{	// 3f0581
+		m_extra_count++;
+	}
+	else
+	{
+		m_mouse_buf[m_in_count] = value;
+		m_sum += value;
+		m_in_count++;
+	}
+	uart.status = 1;
+}

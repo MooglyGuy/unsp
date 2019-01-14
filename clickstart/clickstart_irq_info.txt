@@ -1,0 +1,14 @@
+IRQ0: 9d6c
+	
+IRQ1: 9da2 [nothing]
+IRQ2: 9da3 [nothing]
+IRQ3: 9da4
+	Ignores non-UART IRQs, calls 3f0554 for UART IRQ
+IRQ4: 9db2
+	calls 7837
+IRQ5: 9db5 [nothing]
+IRQ6: 9db6
+	First two hits, just clears 1kHz IRQ and returns
+	3rd hit, calls 170cf9 and then disables 1kHz IRQ and returns
+IRQ7: 9dce
+	Clears TMB2 IRQ
