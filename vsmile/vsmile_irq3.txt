@@ -56,6 +56,7 @@ u16 m_unk_222b;		// 0x222b
 u16 m_unk_22d5;		// 0x22d5
 u16 m_unk_22d6;		// 0x22d6
 u16 m_unk_22d7;		// 0x22d7
+u16 m_unk_22da;		// 0x22da
 u16 m_unk_22db;		// 0x22db
 u16 m_unk_22dc;		// 0x22dc
 u16 m_unk_22df;		// 0x22df
@@ -140,10 +141,17 @@ void uart_handler() // aa10
 				}
 				else if (high_nybble < 0x40)
 				{	// abc8
-					u16 unk_counter = m_unk_22df - 1;
+					u16 unk_counter = m_unk_22df;
+					if (unk_counter == 0)
+					{
+						m_unk_217e &= ~0x0400;
+						unk_counter = 2;
+					}
+					unk_counter--;
+					m_unk_22df = unk_counter;
 					if (unk_counter != 0)
-					{	// abd6
-						m_unk_22df = unk_counter;
+					{
+						*(&m_unk_22da + unk_counter) = rx_val;
 					}
 					else
 					{	// abdb
@@ -157,7 +165,7 @@ void uart_handler() // aa10
 							m_unk_22d6 += (rx_val & 0x20) ? (rx_val - 0x40) : rx_val;
 							m_unk_22d7 += (m_unk_22d6 & 0x20) ? (m_unk_22d6 - 0x40) : m_unk_22d6;
 						}
-
+	
 						// abac
 						if (unknown_ac0b() == 1)
 						{	// abba
