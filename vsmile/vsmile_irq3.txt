@@ -31,7 +31,9 @@
 // IOC bits
 #define IOC_CTRL1_SEL	0x0100
 #define IOC_CTRL2_SEL	0x0200
+#define IOC_CTRL1_RTS	0x1000
 
+#define IOC_DATA	[3d0b]
 #define IOC_BUFFER	[3d0c]
 #define IRQ_ENABLE	[3d21]
 #define IRQ_STATUS	[3d22]
@@ -54,14 +56,17 @@ u16 m_unk_222b;		// 0x222b
 u16 m_unk_22d5;		// 0x22d5
 u16 m_unk_22d6;		// 0x22d6
 u16 m_unk_22d7;		// 0x22d7
+u16 m_unk_22db;		// 0x22db
+u16 m_unk_22dc;		// 0x22dc
 u16 m_unk_22df;		// 0x22df
-u16 m_other_state;	// 0x22f6
-u16 m_color_state;	// 0x22f7
-u16 m_joy_y_state;	// 0x22f8
-u16 m_joy_x_state;	// 0x22f9
-u16 m_unk_22fa;		// 0x22fa
-u16 m_unk_22fb;		// 0x22fb
-u16 m_unk_22fc;		// 0x22fc
+u16 m_ctrl_state[7];	// 0x22f6..22fc
+u16 m_unk_buf_22fd[7];	// 0x22fd..2303
+u16 m_unk_buf_2304[7];	// 0x2304..230a
+
+#define m_other_state	m_ctrl_state[0]
+#define m_color_state	m_ctrl_state[1]
+#define m_joy_y_state	m_ctrl_state[2]
+#define m_joy_x_state	m_ctrl_state[3]
 
 void handle_irq3()
 {
@@ -105,7 +110,7 @@ void uart_handler() // aa10
 			if (status & UART_RX_FULL)
 			{
 				u16 rx_val = UART_RXBUF;
-				u16 high_nybble = rx_Val & 0x00f0;
+				u16 high_nybble = rx_val & 0x00f0;
 				if (high_nybble == 0x40)
 				{	// ab93
 					m_unk_217e |= 0x0600;
@@ -113,7 +118,6 @@ void uart_handler() // aa10
 					{	// ab9c
 						m_unk_22d5 = rx_val & 0x0001;
 						m_unk_22df = 3;
-						// ab58
 					}
 					else
 					{	// aba5
@@ -122,53 +126,124 @@ void uart_handler() // aa10
 						m_unk_22df = 0;
 						if (unknown_ac0b() == 1)
 						{	// abba
-							m_unk_22fa = m_unk_22d5;
-							m_unk_22fb = m_unk_22d6;
-							m_unk_22fc = m_unk_22d7;
-							// ab58
+							m_ctrl_state[4] = m_unk_22d5;
+							m_ctrl_state[5] = m_unk_22d6;
+							m_ctrl_state[6] = m_unk_22d7;
 						}
 						else
 						{	// abb0
-							m_unk_22fa = 0xffff;
-							m_unk_22fb = 0xffff;
-							m_unk_22fc = 0xffff;
-							// ab58
+							m_ctrl_state[4] = 0xffff;
+							m_ctrl_state[5] = 0xffff;
+							m_ctrl_state[6] = 0xffff;
 						}
 					}
 				}
 				else if (high_nybble < 0x40)
 				{	// abc8
+					u16 unk_counter = m_unk_22df - 1;
+					if (unk_counter != 0)
+					{	// abd6
+						m_unk_22df = unk_counter;
+					}
+					else
+					{	// abdb
+						if (m_unk_217e & 0x0400)
+						{	// abf8
+							m_unk_22d6 = rx_val + ((m_unk_22d6 & 3) << 6);
+							m_unk_22d7 = (m_unk_22db >> 2) + (m_unk_22dc << 4);
+						}
+						else
+						{	// abe0
+							m_unk_22d6 += (rx_val & 0x20) ? (rx_val - 0x40) : rx_val;
+							m_unk_22d7 += (m_unk_22d6 & 0x20) ? (m_unk_22d6 - 0x40) : m_unk_22d6;
+						}
+
+						// abac
+						if (unknown_ac0b() == 1)
+						{	// abba
+							m_ctrl_state[4] = m_unk_22d5;
+							m_ctrl_state[5] = m_unk_22d6;
+							m_ctrl_state[6] = m_unk_22d7;
+						}
+						else
+						{	// abb0
+							m_ctrl_state[4] = 0xffff;
+							m_ctrl_state[5] = 0xffff;
+							m_ctrl_state[6] = 0xffff;
+						}
+					}
 				}
 				else if (high_nybble == 0x80)
 				{	// ab4b
 					m_joy_y_state = rx_val & 0x0f;
-					// ab58
 				}
 				else if (high_nybble == 0xc0)
 				{	// ab4e
 					m_joy_x_state = rx_val & 0x0f;
-					// ab58
 				}
 				else if (high_nybble == 0x90)
 				{	// ab51
 					m_color_state = rx_val & 0x0f;
-					// ab58
 				}
 				else if (high_nybble == 0xa0)
 				{	// ab54
 					m_other_state = rx_val & 0x0f;
-					// ab58
 				}
-				else if (high_nybble == 0x70 || high_nybble == 0xb0)
-				{	// ab47
-					m_ctrl_check_byte = rx_val;
-					// ab80
-				}
-				else if (high_nybble == 0x50)
+				else
 				{
-					m_unk_217e |= 0x80;
+					if (high_nybble == 0x70 || high_nybble == 0xb0)
+					{	// ab47
+						m_ctrl_check_byte = rx_val;
+					}
+					else if (high_nybble == 0x50)
+					{	// ab3f
+						m_unk_217e |= 0x80;
+					}
 					// ab80
+					IOC_BUFFER &= ~(IOC_CTRL1_SEL | IOC_CTRL2_SEL);
+					m_unk_217d &= ~0x0024;
+					m_unk_217b = m_unk_222b;
+					UART_STATUS = UART_RXRDY | UART_TXRDY;
+					return;
 				}
+
+				// ab58
+				if (IOC_DATA & IOC_CTRL1_RTS)
+				{	// ab5d
+					if (!(m_unk_217e & 0x0008))
+					{	// ab61
+						u16 *unk_ptr1;
+						u16 *state_ptr = m_ctrl_state;
+						if (m_unk_217d & 0x0200)
+						{	// ab68
+							m_unk_217d |= 0x0800;
+							unk_ptr = m_unk_buf_2304;
+						}
+						else
+						{	// ab6d
+							m_unk_217d |= 0x0080;
+							unk_ptr = m_unk_buf_22fd;
+						}
+						do
+						{	// ab73
+							if (*state_ptr != 0xffff)
+							{	// ab77
+								*unk_ptr = *state_ptr;
+								*state_ptr = 0xffff;
+							}
+							// ab7b
+							unk_ptr++;
+							state_ptr++;
+						} while (state_ptr < m_unk_buf_22fd);
+					}
+					// ab80
+					IOC_BUFFER &= ~(IOC_CTRL1_SEL | IOC_CTRL2_SEL);
+					m_unk_217d &= ~0x0024;
+				}
+				// ab8b
+				m_unk_217b = m_unk_222b;
+				UART_STATUS = UART_RXRDY | UART_TXRDY;
+				return;
 			}
 		}
 	}
