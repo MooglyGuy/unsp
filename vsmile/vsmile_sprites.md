@@ -1,6 +1,8 @@
 # V.Smile Sprite Issues
 
-This document contains observations and information about the issues affecting sprite updates with the V.Smile driver in MAME.
+This document contains observations and information regarding the issues that previously affected sprite updates in the V.Smile driver in MAME. These issues have since been solved, and this document is preserved merely for historical reasons.
+
+GPIO port C bit 5 is labeled "test point" on the system PCB. It is an active-low input. If the bit is unset during reads (i.e., active), then for a still-unknown reason, it causes some animations in V.Smile games to become choppy.
 
 ## Overview
 
