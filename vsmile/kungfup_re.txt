@@ -1,0 +1,45 @@
+#define VIDEO_IRQ_EN		*(u16)0x2862
+#define GPIO_PORTC_DATA		*(u16)0x3d0b
+
+// Video IRQ flags
+#define BLK_IRQ			0x0001
+#define VDO_IRQ			0x0002
+#define DMA_IRQ			0x0004
+
+// GPIO Port C bits
+#define PORTC_VERSION_MASK	0x000f
+#define PORTC_LOGO		0x0010
+#define PORTC_TEST_POINT	0x0020
+
+u16 m_unk_1e17;			// 1e17
+u16 m_unk_207b;			// 207b
+
+void set_1e17() // 24fbe
+{
+	m_unk_1e17 = 1;
+}
+
+void clear_1e17() // 24fc6
+{
+	m_unk_1e17 = 0;
+}
+
+u16 get_test_point() // 6fc74
+{
+	return GPIO_PORTC_DATA & PORTC_TEST_POINT;
+}
+
+void memset(u16 *dest, u16 val, u16 length) // 6fcf7
+{
+	while (length)
+	{
+		*dest++ = val;
+		length--;
+	}
+}
+
+void disable_vbl_irq() // 6febb
+{
+	VIDEO_IRQ_EN &= ~BLK_IRQ;
+	m_unk_207b++;
+}
