@@ -1,6 +1,6 @@
 # V.Smile Sprite Issues
 
-This document contains observations and information about the issues affecting sprite updates with the V.SMile driver in MAME.
+This document contains observations and information about the issues affecting sprite updates with the V.Smile driver in MAME.
 
 ## Overview
 
