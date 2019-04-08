@@ -9,11 +9,14 @@ Along with surely many as-yet unidentified systems, the μnSP is the core archit
 - Junglesoft "Wireless 60" multi-game console
 - Hamy / Kids Station Toys "Wireless Hunting Video Game System"
 - VTech "V.Smile TV Learning System" console
+- VTech "V.Smile Motion" console
+- VTech "V.Smile Baby" console
 - LeapFrog "Clickstart My First Computer" console
 - JAKKS Pacific Plug & Play video games, including The Batman and Wall-E
 - JAKKS Pacific Game-Key-Ready video games, including WWE, Fantastic Four, Justice League, and Dora The Explorer
 - Radica Play TV (NTSC) / ConnecTV (PAL) Skateboarder, Football 2, Cricket, and Skannerz TV
 - Mattel "Mattel Classic Sports" multi-game console
+- Fisher Price musical consoles, including I Can Play Piano and I Can Play Guitar
 
 Known but undumped systems using a μnSP-derived core include the following JAKKS Pacific Game-Key-Ready games:
 - Nicktoons (3? game keys available, same as Dora The Explorer)
@@ -63,12 +66,14 @@ The status register, SR, contains, from MSB to LSB: The uppermost 6 bits of the 
 These are systems-on-a-chip using the μnSP architecture as the core CPU, with 10 kilowords of main RAM mapped at address 0, and varying configurations of peripherals mapped immediately following main RAM.
 
 In all known configurations except the SPG110, which has an as-yet unknown peripheral configuration, peripherals are mapped as follows:
+- 0000..27FF: Main RAM (10 kilowords)
 - 2800..28FF: PPU (Picture Processing Unit) registers
 - 2900..2AFF: Scroll RAM (used to scroll individual tilemap lines)
 - 2B00..2BFF: Palette RAM
-- 2C00..2FFF: Sprite RAM (4 words per sprite0
+- 2C00..2FFF: Sprite RAM (4 words per sprite)
 - 3000..37FF: SPU (Sound Processing Unit) registers
 - 3D00..3EFF: I/O peripheral registers
+- 004000..3FFFFF: External memory (ROM, RAM, etc.)
 
 Common I/O peripherals include:
 - IRQ enable/disable/acknowledge
@@ -94,15 +99,17 @@ This section is for various specific details about consoles and one-off games th
 
 ### VTech V.Smile
 
-The V.Smile supports two controllers which communicate bidirectionally with the main console through a wired connection to the serial UART. They likely have an on-board microcontroller to manage communications, which is as yet unidentified and undumped. The controllers are accessed through GPIO port C. The console can reset the controllers and indicate that it is ready to receive data, as well as transmit data to the controllers. The controllers have one joystick, 8 buttons, and 4 LEDs, the latter of which can be set via commands sent from the console. The joystick can indicate 5 positions per direction, for a total of 11 positions per-axis.
+The V.Smile supports two controllers which communicate bidirectionally with the main console through a wired connection to the serial UART. They likely have an on-board microcontroller to manage communications, which is as yet unidentified and undumped. The controllers are accessed through GPIO port C. The console can reset the controllers and indicate that it is ready to receive data, as well as transmit data to the controllers. The controllers have one joystick, 8 buttons, and 4 LEDs, the latter of which can be set via commands sent from the console. The joystick can indicate 5 positions per direction, for a total of 11 positions per axis.
 
 Along with other data, the console periodically transmits one of 16 possible values as a check byte to the controller, which transmits back a transform of the most recent two check bytes. The transform is as follows, as documented by Rebecca G. Bettencourt:
 
-Response = ((A + B + 0xF) & 0xF) ^ 0xB5
+*Response* = ((*A* + *B* + 0xF) & 0xF) ^ 0xB5
 
 In the event that two bytes have not yet been transmitted, a value of 0 is used for A.
 
 Notably, the console has a built-in test mode which can be invoked by having both the On and Off switches set simultaneously on power-up. The test mode will perform a checksum of two different memory ranges, show the current power level as read by the ADC, and show an outline of the controller as well as the state of the buttons and joystick.
+
+(Can you please attach a screenshot or video of the test mode?)
 
 Currently, the major stumbling block to the system being marked working in MAME is that a number of games fail to boot entirely, showing nothing but a black screen.
 
