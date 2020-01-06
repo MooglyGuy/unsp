@@ -94,7 +94,11 @@ This section is for various specific details about consoles and one-off games th
 
 ### VTech V.Smile
 
+VTech produced two models: the V.Smile and the V.Smile Pocket.
+
 The V.Smile supports two controllers which communicate bidirectionally with the main console through a wired connection to the serial UART. They likely have an on-board microcontroller to manage communications, which is as yet unidentified and undumped. The controllers are accessed through GPIO port C. The console can reset the controllers and indicate that it is ready to receive data, as well as transmit data to the controllers. The controllers have one joystick, 8 buttons, and 4 LEDs, the latter of which can be set via commands sent from the console. The joystick can indicate 5 positions per direction, for a total of 11 positions per-axis.
+
+The V.Smile Pocket have only one (embedded, mechanically reversible) controlle, a slot at the back to accept cartridges, a low end lcd display and audio out. It can't accept the standard bulky reversible controllers nor the digitizer tablet.
 
 Along with other data, the console periodically transmits one of 16 possible values as a check byte to the controller, which transmits back a transform of the most recent two check bytes. The transform is as follows, as documented by Rebecca G. Bettencourt:
 
