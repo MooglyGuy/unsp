@@ -4,17 +4,20 @@
 
 ```
       (?)   (Exit)                 (OK)
+      0xa3   0xa2                  0xa1
       
        1              2              3
       RED             UP           YELLOW
+      0x8b           0x92           0xcb
       
       
        4              5              6
       LEFT          TOAST          RIGHT
-      
+      0x8d           0x91           0xcd
       
        7              8              9
       BLUE           DOWN          GREEN
+      0xa4           0x94           0x98
 ```
 
 
