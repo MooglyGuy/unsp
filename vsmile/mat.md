@@ -71,6 +71,33 @@
   C0      ! LR stick release
   80      ! UD stick release
   ...
-    repeated every 74.04ms
+    repeated every 74.04ms (avg on 115 measures)
+```
+          
+# step on pad 7
+
+```
+  A4      ! ABC key press
+  C0      ! LR stick release
+  80      ! UD stick release
+  C0      ! LR stick release
+  80      ! UD stick release
+  ...
+    repeated every 70.53ms (avg on 55 measures)
 ```
 
+# dual pad-press 4 and 6
+
+```
+  CD      ! left 5
+  80      ! UD stick release    
+  CD      ! left 5
+  8D      ! down 5
+  CD      ! left 5
+  80      ! UD stick release
+  C0      ! LR stick release
+  80      ! UD stick release
+  C0      ! LR stick release
+  80      ! UD stick release
+```
+  
